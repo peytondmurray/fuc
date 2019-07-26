@@ -52,10 +52,8 @@ void updateURL(std::string url) {
             json j;
             j << configFile; //Might be configFile >> j;
         }
-
         j["url"] = url;
     }
-
 
     return;
 }
