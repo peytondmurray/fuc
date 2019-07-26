@@ -2,8 +2,9 @@
 
 #include "main.h"
 
-namespace json = nlohmann::json;
+namespace nlohmann = nlohmann;
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 int main(int argc, char** argv) {
 
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
         std::cout << desc << "\n";
         return 0;
     }
-    
+
     if (vm.count("update")) {
         updateSymbols();
     }
@@ -42,10 +43,24 @@ void updateURL(std::string url) {
 
     char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
     if (xdg_config_home != NULL) {
-        std::sstream configPath;
-        configPath << xdg_config_home << "/fucn/config.json";
-        if (!boost::filesystem::exists(configPath)) {
-            //make the path
+        std::string configDir = std::string(xdg_config_home) + "/fucn/";
+
+        if (fs::is_directory(configDir)) {
+            if (fs::is_regular_file(configDir + "config.json")) {
+                std::ifstream configFile(configDir + "config.json");
+                nlohmann::json j;
+                configFile >> j;
+                configFile.close();
+            } else {
+
+            }
+
+        } else {
+            fs::create_directory(configDir);
+            //make the path and the file
+        }
+
+
         else {
             //path already exists
             std::ifstream configFile(configPath);
@@ -57,3 +72,35 @@ void updateURL(std::string url) {
 
     return;
 }
+
+
+void readConfig(std::string path) {
+    if (fs::is_regular_file(path)) {
+
+    }
+}
+
+void writeConfig(std::string path, nlohmann::json j) {
+    return;
+}
+
+bool configExists() {
+    char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
+    return (xdg_config_home != NULL && fs::exists(std::string(xdg_config_home) + "/fucn/config.json"));
+}
+
+void writeDefaultConfig() {
+    char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
+    std::string configDir = std::string(xdg_config_home) + "/fucn/";
+    nlohmann::json j;
+
+    j["url"] = "https://unicode.org/Public/UNIDATA/NamesList.txt";
+    if (xdg_config_home == NULL) throw "Environment variable XDG_CONFIG_HOME not set.";
+    else if (!fs::is_directory(configDir)) fs::create_directory(configDir);
+
+    std::ofstream configFile(configDir + "config.json");
+    configFile << std::setw(4) << j << std::endl;
+    configFile.close();
+    return;
+}
+
