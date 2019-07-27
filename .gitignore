@@ -1,3 +1,6 @@
 *.o
 fucn
 .vscode/
+fts_fuzzy_match
+fzm
+fzmatch

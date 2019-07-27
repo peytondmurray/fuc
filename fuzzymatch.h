@@ -1,7 +1,7 @@
 #ifndef FUZZYMATCH_H
 #define FUZZYMATCH_H
 
-//https://github.com/forrestthewoods/lib_fts/blob/master/code/fts_fuzzy_match.h
+// https://github.com/forrestthewoods/lib_fts/blob/master/code/fts_fuzzy_match.h
 
 #include <cstring>
 #include <string>
@@ -10,7 +10,7 @@ static int fuzzy_match(const char *pattern, const char *str) {
     int score = 0;
     while (*pattern != '\0' && *str != '\0') {
         if (std::tolower(*pattern) == std::tolower(*str)) {
-               
+
             pattern++;
         }
         str++;
@@ -21,14 +21,14 @@ static int fuzzy_match(const char *pattern, const char *str) {
 
 
 static bool fuzzy_match_recursive(const char *pattern,
-                                  const char *str, 
-                                  int &outScore, 
-                                  const char *strBegin, 
-                                  uint8_t const *srcMatches, 
+                                  const char *str,
+                                  int &outScore,
+                                  const char *strBegin,
+                                  uint8_t const *srcMatches,
                                   uint8_t *matches,
-                                  int maxMatches, 
-                                  int nextMatch, 
-                                  int &recursionCount, 
+                                  int maxMatches,
+                                  int nextMatch,
+                                  int &recursionCount,
                                   int recursionLimit) {
 
     // Count recursions
@@ -63,13 +63,13 @@ static bool fuzzy_match_recursive(const char *pattern,
             int recursiveScore;
             if (fuzzy_match_recursive(pattern,
                                       str+1,
-                                      recursiveScore, 
-                                      strBegin, 
-                                      matches, 
-                                      recursiveMatches, 
-                                      sizeof(recursiveMatches), 
-                                      nextMatch, 
-                                      recursionCount, 
+                                      recursiveScore,
+                                      strBegin,
+                                      matches,
+                                      recursiveMatches,
+                                      sizeof(recursiveMatches),
+                                      nextMatch,
+                                      recursionCount,
                                       recursionLimit)) {
 
                 // Pick the best recursive score
@@ -107,7 +107,7 @@ static bool fuzzy_match_recursive(const char *pattern,
         outScore = 100;
 
         // Apply leading letter penalty
-        int penalty = leading_letter_psenalty*matches[0];
+        int penalty = leading_letter_penalty*matches[0];
         if (penalty < max_leading_letter_penalty) penalty = max_leading_letter_penalty;
         outScore += penalty;
 
