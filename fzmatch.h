@@ -15,13 +15,16 @@
 #define UNMATCHED_LETTER_PENALTY -1
 
 // Function declarations
+
+// Wrapper for the fuzzy matching function.
+int fzmatch(const char *patter, const char *str);
 void _fzmatch(const char *pattern, const char *str, int &topScore, int nConsecutive, int nLeadingPenalties, int recursionDepth, int maxRecursion);
 
 
-void fzmatch(const char *pattern, const char *str, int &topScore) {
-
-    return _fzmatch(pattern, str, topScore, 0, 0, 0, 10);
-
+int fzmatch(const char *pattern, const char *str) {
+    int topScore = 0;
+    _fzmatch(pattern, str, topScore, 0, 0, 0, 10);
+    return topScore;
 }
 
 void _fzmatch(const char *pattern, const char *str, int &topScore, int nConsecutive, int nLeadingPenalties, int recursionDepth, int maxRecursion) {

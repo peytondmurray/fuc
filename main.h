@@ -9,9 +9,10 @@
 #include <sstream>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include "json.hpp"
+// #include "json.hpp"
+#include "fzmatch.h"
 
-void updateSymbols();
-void updateURL(std::string);
+void parse(std::string fname);
+void parse(std::string fname, std::string cfgDir);
 
 #endif

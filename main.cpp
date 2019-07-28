@@ -2,105 +2,82 @@
 
 #include "main.h"
 
-namespace nlohmann = nlohmann;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 int main(int argc, char** argv) {
 
-    po::options_description desc("Options");
-    desc.add_options()
-        ("help", "Print help message")
-        ("update", "Pull the latest list of unicode symbols from unicode.org")
-        ("update-url", po::value<std::string>(), "Set the url to use when updating the symbol list");
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+    if (argc > 1) {
+        parse(argv[1]);
+    } else std::cout << "Invalid arguments" << std::endl;
 
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        return 0;
-    }
 
-    if (vm.count("update")) {
-        updateSymbols();
-    }
+    // vm.count doesn't seem to work at all, not even in the boost examples
+    // std::cout << argv[1];
 
-    if (vm.count("update-url")) {
-        updateURL(vm["update-url"].as<std::string>());
-    }
+    // po::options_description desc("Options");
+    // desc.add_options()
+    //     ("help", "Print help message")
+    //     ("parse", po::value<std::string>(), "Parse the unicode symbol list from unicode.org");
+
+    // po::variables_map vm;
+    // po::store(po::parse_command_line(argc, argv, desc), vm);
+    // po::notify(vm);
+
+    // if (vm.count("help")) {
+    //     std::cout << "HELP!" << "\n";
+    //     std::cout << desc << "\n";
+    //     return 0;
+    // }
+
+    // if (vm.count("parse")) {
+    //     parse(vm["parse"].as<std::string>());
+    //     return 0;
+    // }
 
     return 0;
 }
 
-void updateSymbols() {
-    return;
-}
-
-void updateURL(std::string url) {
+void parse(std::string fname) {
     // $XDG_CONFIG_HOME  ~/.config
 
     char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
-    if (xdg_config_home != NULL) {
-        std::string configDir = std::string(xdg_config_home) + "/fucn/";
-
-        if (fs::is_directory(configDir)) {
-            if (fs::is_regular_file(configDir + "config.json")) {
-                std::ifstream configFile(configDir + "config.json");
-                nlohmann::json j;
-                configFile >> j;
-                configFile.close();
-            } else {
-
-            }
-
-        } else {
-            fs::create_directory(configDir);
-            //make the path and the file
-        }
-
-
-        else {
-            //path already exists
-            std::ifstream configFile(configPath);
-            json j;
-            j << configFile; //Might be configFile >> j;
-        }
-        j["url"] = url;
+    if (xdg_config_home == NULL) {
+        std::cout << "XDG_CONFIG_HOME not set! Falling back to ~/.config" << std::endl;
+        xdg_config_home = std::string("/home/pdmurray/.config");
     }
 
-    return;
+    std::string cfgDir = std::string(xdg_config_home).append(std::string("/fucn/"));
+    std::cout << "The cfgDir is: " << cfgDir << std::endl;
+
+    parse(fname, std::string(xdg_config_home) + "/fucn/");
+    
 }
 
+void parse(std::string fname, std::string cfgDir) {
 
-void readConfig(std::string path) {
-    if (fs::is_regular_file(path)) {
-
+    if (!fs::exists(cfgDir)) {
+        fs::create_directory(cfgDir);
+        std::cout << cfgDir << " has been created." << std::endl;
+    } else {
+        std::cout << cfgDir << " appears to exist already." << std::endl;
     }
-}
+    // try {
+    // } catch (...) {
+    //     std::cout << "Can't create directory.";
+    // }
 
-void writeConfig(std::string path, nlohmann::json j) {
+    std::ofstream symbolsFile(cfgDir + "symbols.txt");
+    std::ifstream rawSymbols(fname);
+    std::string buffer;
+    while (std::getline(rawSymbols, buffer)) {
+        if (buffer[0] != '\t' || buffer[0] != '@' || buffer[0] != ';') {
+            symbolsFile << buffer;
+        }
+    }
+    rawSymbols.close();
+    symbolsFile.close();
+
     return;
 }
-
-bool configExists() {
-    char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
-    return (xdg_config_home != NULL && fs::exists(std::string(xdg_config_home) + "/fucn/config.json"));
-}
-
-void writeDefaultConfig() {
-    char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
-    std::string configDir = std::string(xdg_config_home) + "/fucn/";
-    nlohmann::json j;
-
-    j["url"] = "https://unicode.org/Public/UNIDATA/NamesList.txt";
-    if (xdg_config_home == NULL) throw "Environment variable XDG_CONFIG_HOME not set.";
-    else if (!fs::is_directory(configDir)) fs::create_directory(configDir);
-
-    std::ofstream configFile(configDir + "config.json");
-    configFile << std::setw(4) << j << std::endl;
-    configFile.close();
-    return;
-}
-
