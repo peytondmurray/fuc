@@ -2,39 +2,22 @@
 
 #include "main.h"
 
-namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 int main(int argc, char** argv) {
 
+    if (argc == 1) {
+        std::cout << "Usage: fucn <pattern>" << std::endl;
+        std::cout << "       fucn -parse <symbols file>" << std::endl;
+        return 0;
+    }
 
-    if (argc > 1) {
-        parse(argv[1]);
-    } else std::cout << "Invalid arguments" << std::endl;
+    for (int i=0; i<argc-1; i++) {
+        if (std::strcmp(argv[i], "-parse") == 0) parse(argv[i+1]);
+        return 0;
+    }
 
-
-    // vm.count doesn't seem to work at all, not even in the boost examples
-    // std::cout << argv[1];
-
-    // po::options_description desc("Options");
-    // desc.add_options()
-    //     ("help", "Print help message")
-    //     ("parse", po::value<std::string>(), "Parse the unicode symbol list from unicode.org");
-
-    // po::variables_map vm;
-    // po::store(po::parse_command_line(argc, argv, desc), vm);
-    // po::notify(vm);
-
-    // if (vm.count("help")) {
-    //     std::cout << "HELP!" << "\n";
-    //     std::cout << desc << "\n";
-    //     return 0;
-    // }
-
-    // if (vm.count("parse")) {
-    //     parse(vm["parse"].as<std::string>());
-    //     return 0;
-    // }
+    // return fzmatch()
 
     return 0;
 }
@@ -42,8 +25,8 @@ int main(int argc, char** argv) {
 void parse(std::string fname) {
     // $XDG_CONFIG_HOME  ~/.config
 
-    char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
-    if (xdg_config_home == NULL) {
+    std::string xdg_config_home = std::getenv("XDG_CONFIG_HOME");
+    if (xdg_config_home == "") {
         std::cout << "XDG_CONFIG_HOME not set! Falling back to ~/.config" << std::endl;
         xdg_config_home = std::string("/home/pdmurray/.config");
     }
@@ -52,7 +35,7 @@ void parse(std::string fname) {
     std::cout << "The cfgDir is: " << cfgDir << std::endl;
 
     parse(fname, std::string(xdg_config_home) + "/fucn/");
-    
+
 }
 
 void parse(std::string fname, std::string cfgDir) {
