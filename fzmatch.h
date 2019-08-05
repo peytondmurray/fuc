@@ -1,64 +1,92 @@
 #include <cstring>
 #include <string>
 #include <cctype>
+#include "result.h"
 
-// Bonuses
-#define CONSECUTIVE_BONUS 5
-#define MATCHED_CHAR_BONUS 1
-#define SEPARATOR_BONUS 10
-#define CAMEL_BONUS 10
-#define FIRST_CHAR_BONUS 15
+// Copied from fzf source.
+#define SCOREMATCH 16
+#define SCOREGAPSTART -3
+#define SCOREGAPEXTENSION -1
 
-// Penalties
-#define LEADING_CHAR_PENALTY -3
-#define MAX_NUMBER_LEADING_CHAR_PENALTIES 3
-#define UNMATCHED_LETTER_PENALTY -1
+#define BONUSBOUNDARY SCOREMATCH/2
+#define BONUSNONWORD SCOREMATCH/2
+#define BONUSCAMEL123 BONUSBOUNDARY+SCOREGAPEXTENSION
+#define BONUSCONSECUTIVE -(SCOREGAPSTART+SCOREGAPEXTENSION)
+#define BONUSFIRSTCHARMULTIPLIER 2
 
-// Function declarations
+Result fzmatch(std::string pattern, std::string input);
+int asciiFuzzyIndex(std::string pattern, std::string input);
+int trySkip(char pattern, std::string input, int from);
 
-// Wrapper for the fuzzy matching function.
-int fzmatch(const char *patter, const char *str);
-void _fzmatch(const char *pattern, const char *str, int &topScore, int nConsecutive, int nLeadingPenalties, int recursionDepth, int maxRecursion);
+Result fzmatch(std::string pattern, std::string input) {
+    int M = pattern.size();
+    int N = input.size();
 
+    if (M == 0) return Result();
+    if (N == 0) return Result();
 
-int fzmatch(const char *pattern, const char *str) {
-    int topScore = 0;
-    _fzmatch(pattern, str, topScore, 0, 0, 0, 10);
-    return topScore;
-}
+    // Optimized search for ASCII string
+    int idx = asciiFuzzyIndex(pattern, input);
+    if (idx < 0) return Result();
 
-void _fzmatch(const char *pattern, const char *str, int &topScore, int nConsecutive, int nLeadingPenalties, int recursionDepth, int maxRecursion) {
+    // Calculate bonus for each point
+    {
+        int maxScore = 0;
+        int maxScorePos = 0;
+        int pidx = 0;
+        int lastIdx = 0;
+        char pchar0 = pattern[0];
+        char pchar = pattern[0];
+        int prevH0 = 0;
+        int prefClass = 0;
+        bool inGap = false;
+        
+        // TODO: Normalize characters: ä -> a, ö -> o, etc
 
-    // If we are at the max recursion depth, or at the end of either of the strings, get out
-    if ((recursionDepth >= maxRecursion) || (*pattern == '\0' || *str == '\0')) return;
-
-    if (std::tolower(*pattern) == std::tolower(*str)) {
-        nLeadingPenalties = 0;
-
-        int topScoreMatch = 0;
-        int topScoreSkip = 0;
-
-        // Tally the bonuses from matching
-        if (nConsecutive > 0){
-            topScoreMatch += CONSECUTIVE_BONUS;
-            if (std::isupper(*pattern) && std::islower(*(pattern - 1))) topScoreMatch += CAMEL_BONUS;
+        // Tally bonuses
+        for (int i=idx; i<N-1; i++) {
+            if input[i]
         }
-        if (*pattern == ' ' || *pattern == '_') topScoreMatch += SEPARATOR_BONUS;
-        if (recursionDepth == 0) topScoreMatch += FIRST_CHAR_BONUS;
 
 
-        // Set topScore equal to the
-        _fzmatch(pattern+1, str+1, topScoreMatch, nConsecutive+1, 0, recursionDepth+1, maxRecursion);
-        _fzmatch(pattern, str+1, topScoreSkip, 0, 0, recursionDepth+1, maxRecursion);
-        topScore += (topScoreMatch > topScoreSkip) ? topScoreMatch : topScoreSkip;
-    } else {
-        if ((recursionDepth == nLeadingPenalties) && nLeadingPenalties < MAX_NUMBER_LEADING_CHAR_PENALTIES) {
-            topScore += LEADING_CHAR_PENALTY;
-            nLeadingPenalties++;
-        } else nLeadingPenalties = 0;
-        topScore += UNMATCHED_LETTER_PENALTY;
-        _fzmatch(pattern, str+1, topScore, 0, nLeadingPenalties, recursionDepth+1, maxRecursion);
+        // Must iterate through entire pattern; otherwise, match fails
+        if (pidx != M) return Result();
+        if (M == 1) return Result(maxScorePos, maxScorePos+1, maxScore);
     }
 
-    return;
+
+    // Fill in score matrix. Do not allow skipping of characters in pattern.
+
+    // (optional) backtrace to find character positions
+}
+
+int asciiFuzzyIndex(std::string pattern, std::string input) {
+    int firstIdx = 0;
+    int idx = 0;
+
+    for (int pidx=0; pidx<pattern.size(); pidx++) {
+        idx = trySkip(pattern[pidx], input, idx);
+        if (idx == std::string::npos) return -1;
+        if (pidx == 0 && idx > 0) firstIdx = idx-1;
+        idx++;
+    }
+    return firstIdx;
+}
+
+
+// Get index of first appearance of pattern in input. If neither lowercase or uppercase
+// is not found, then returns -1.
+int trySkip(char pattern, std::string input, int from) {
+    int idx = input.find(std::tolower(pattern), from);
+
+    if (idx == std::string::npos) {
+        // No lowercase pattern found. Try uppercase.
+        int uidx = input.find(std::toupper(pattern), from);
+        return uidx == std::string::npos ? -1 : uidx;
+    } else {
+        // Lowercase pattern found, but there could still have been uppercase.
+        // Check the substring input[from:idx]
+        int uidx = input.substr(from, idx-from).find(std::toupper(pattern));
+        return uidx == std::string::npos ? idx : -1;
+    }
 }
