@@ -1,11 +1,11 @@
-CXX = g++
+CXX = clang++
 CXXFLAGS = -std=c++17 -O3
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC:.cpp=.o)
 LDFLAGS += -lboost_system -lboost_filesystem
 
 fucn: $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) -Ofast $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 clean:

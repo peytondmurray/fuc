@@ -1,92 +1,89 @@
-#include <cstring>
+#include <vector>
 #include <string>
-#include <cctype>
-#include "result.h"
 
-// Copied from fzf source.
-#define SCOREMATCH 16
-#define SCOREGAPSTART -3
-#define SCOREGAPEXTENSION -1
+int generate_H(std::string, std::string);
+int first_possible_match(std::string, std::string);
+int fill_value(std::string, std::string, std::vector<std::vector<int>>, int, int);
+int gap(int);
+int substitution(char, char);
+int maxval(std::vector<int>);
 
-#define BONUSBOUNDARY SCOREMATCH/2
-#define BONUSNONWORD SCOREMATCH/2
-#define BONUSCAMEL123 BONUSBOUNDARY+SCOREGAPEXTENSION
-#define BONUSCONSECUTIVE -(SCOREGAPSTART+SCOREGAPEXTENSION)
-#define BONUSFIRSTCHARMULTIPLIER 2
+// Search all the elements of symbols for pattern, using a modified Smith-Waterman algorithm.
+// https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm
+// Returns the highest value of the H-matrix for each item in symbols.
+std::vector<int> fzmatch(std::string pattern, std::vector<std::string> symbols) {
 
-Result fzmatch(std::string pattern, std::string input);
-int asciiFuzzyIndex(std::string pattern, std::string input);
-int trySkip(char pattern, std::string input, int from);
+    std::vector<int> Hmax(symbols.size());
+    for (int i=0; i<symbols.size(); i++) {
+        Hmax[i] = generate_H(pattern, symbols[i]);
 
-Result fzmatch(std::string pattern, std::string input) {
-    int M = pattern.size();
-    int N = input.size();
+    }
+    return Hmax;
+}
 
-    if (M == 0) return Result();
-    if (N == 0) return Result();
+int fzmatch(std::string pattern, std::string symbol) {
+    return generate_H(pattern, symbol);
+}
 
-    // Optimized search for ASCII string
-    int idx = asciiFuzzyIndex(pattern, input);
-    if (idx < 0) return Result();
 
-    // Calculate bonus for each point
-    {
-        int maxScore = 0;
-        int maxScorePos = 0;
-        int pidx = 0;
-        int lastIdx = 0;
-        char pchar0 = pattern[0];
-        char pchar = pattern[0];
-        int prevH0 = 0;
-        int prefClass = 0;
-        bool inGap = false;
-        
-        // TODO: Normalize characters: ä -> a, ö -> o, etc
+// Find the maximum value of the scoring matrix H. A return value of -1 indicates no match.
+int generate_H(std::string A, std::string B) {
 
-        // Tally bonuses
-        for (int i=idx; i<N-1; i++) {
-            if input[i]
+    int Hmax = 0;
+    std::vector<std::vector<int>> H(A.size());
+
+    int skip_j = first_possible_match(A, B);
+    if (skip_j == std::string::npos) return -1;
+
+    for (int i=0; i<A.size(); i++) {
+
+        H[i] = std::vector<int>(B.size(), 0);
+        for (int j=skip_j; j<B.size(); j++) {
+            H[i][j] = fill_value(A, B, H, i, j);
+            if (H[i][j] > Hmax) Hmax = H[i][j];
         }
-
-
-        // Must iterate through entire pattern; otherwise, match fails
-        if (pidx != M) return Result();
-        if (M == 1) return Result(maxScorePos, maxScorePos+1, maxScore);
     }
-
-
-    // Fill in score matrix. Do not allow skipping of characters in pattern.
-
-    // (optional) backtrace to find character positions
+    return Hmax;
 }
 
-int asciiFuzzyIndex(std::string pattern, std::string input) {
-    int firstIdx = 0;
-    int idx = 0;
-
-    for (int pidx=0; pidx<pattern.size(); pidx++) {
-        idx = trySkip(pattern[pidx], input, idx);
-        if (idx == std::string::npos) return -1;
-        if (pidx == 0 && idx > 0) firstIdx = idx-1;
-        idx++;
-    }
-    return firstIdx;
+// To cut down the amount of ties we call fill_value, we do a quick search to find where the
+// first character in A can be found in B. If there is no match, we don't need to any more work
+// to determine the score.
+int first_possible_match(std::string A, std::string B) {
+    return B.find(B[0]);
 }
 
+// Determines the value of H[i][j] according to the (modified) Smith-Waterman algorithm.
+// See https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm for details.
+int fill_value(std::string A, std::string B, std::vector<std::vector<int>> H, int i, int j) {
 
-// Get index of first appearance of pattern in input. If neither lowercase or uppercase
-// is not found, then returns -1.
-int trySkip(char pattern, std::string input, int from) {
-    int idx = input.find(std::tolower(pattern), from);
+    return maxval(std::vector<int>{H[i-1][j-1] + substitution(A[i-1], B[j-1]),
+                                   H[i-1][j] - gap(1),
+                                   H[i][j-1] - gap(1),
+                                   0});
 
-    if (idx == std::string::npos) {
-        // No lowercase pattern found. Try uppercase.
-        int uidx = input.find(std::toupper(pattern), from);
-        return uidx == std::string::npos ? -1 : uidx;
+}
+
+// Substitution matrix. Gives a bonus if the characters match (less if the case doesn't match),
+// or penalizes a mismatch.
+int substitution(char a, char b) {
+    if (a == b) {
+        return 30;
+    } else if (std::tolower(a) == std::tolower(b)) {
+        return 20;
     } else {
-        // Lowercase pattern found, but there could still have been uppercase.
-        // Check the substring input[from:idx]
-        int uidx = input.substr(from, idx-from).find(std::toupper(pattern));
-        return uidx == std::string::npos ? idx : -1;
+        return -30;
     }
+}
+
+// Gap penalty
+int gap(int g) {
+    return 10*g;
+}
+
+// Return the maximum value of a vector of ints
+int maxval(std::vector<int> v) {
+    int max = v[0];
+    for (auto val : v) if (max < val) max = val;
+    return max;
 }

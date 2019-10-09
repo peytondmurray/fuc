@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     } else if (argc == 3 && std::strcmp(argv[1], "-parse") == 0) {
         parse(argv[2]);
     } else if (argc == 4 && std::strcmp(argv[1], "-vs") == 0) {
-        vs(argv[3], argv[4]);
+        vs(argv[2], argv[3]);
     } else if (argc == 3 && std::strcmp(argv[1], "-rankall") == 0) {
         rankAll(argv[2]);
     } else {
@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
 }
 
 std::string getCfgDir() {
-    // $XDG_CONFIG_HOME  ~/.config
 
     std::string cfgDir;
     const char *xdg_config_home = std::getenv("XDG_CONFIG_HOME");
@@ -40,12 +39,14 @@ std::string getCfgDir() {
     return cfgDir + "/fucn/";
 }
 
+// Parse the given file as a unicode dictionary, and overwrite the current unicode dictionary.
 void parse(std::string fname) {
     std::string cfgDir = getCfgDir();
     std::cout << "The cfgDir is: " << cfgDir << std::endl;
     parse(fname, cfgDir);
 }
 
+// Parse the given file as a unicode dictionary, and overwrite the unicode dictionary inside cfgDir.
 void parse(std::string fname, std::string cfgDir) {
 
     if (!fs::exists(cfgDir)) {
@@ -55,18 +56,18 @@ void parse(std::string fname, std::string cfgDir) {
         std::cout << cfgDir << " appears to exist already. Overwriting symbols file." << std::endl;
     }
 
-    std::ofstream symbolsFile; 
+    std::ofstream symbolsFile;
     std::ifstream rawSymbols(fname);
     std::string buffer;
     std::vector<std::string> symbols;
-    
+
     while (std::getline(rawSymbols, buffer)) {
         if (buffer[0] != '\t' && buffer[0] != '@' && buffer[0] != ';') {
             symbols.push_back(buffer);
         }
     }
     rawSymbols.close();
-    
+
 
     symbolsFile.open(cfgDir + "symbols.txt");
     symbolsFile << "# Total number of symbols: " << symbols.size() << "\n";
@@ -80,21 +81,21 @@ void parse(std::string fname, std::string cfgDir) {
 }
 
 void findBest(std::string pattern, int N) {
-    
+
     std::vector<int> bestScores(N);
     std::vector<std::string> bestSymbols(N);
     std::vector<std::string> symbols = readSymbols();
 
     int scoreBuffer;
 
-    bestScores[0] = fzmatch(pattern.c_str(), symbols[0].c_str());
+    bestScores[0] = fzmatch(pattern, symbols[0]);
     bestSymbols[0] = symbols[0];
 
-    for (auto str : symbols) {
-        scoreBuffer = fzmatch(pattern.c_str(), str.c_str());
+    for (auto symbol : symbols) {
+        scoreBuffer = fzmatch(pattern, symbol);
         if (scoreBuffer > bestScores[0]) {
             bestScores.insert(bestScores.begin(), scoreBuffer);
-            bestSymbols.insert(bestSymbols.begin(), str);
+            bestSymbols.insert(bestSymbols.begin(), symbol);
         }
     }
 
@@ -120,12 +121,12 @@ std::vector<std::string> readSymbols(std::string fname) {
 void rankAll(std::string pattern) {
     std::vector<std::string> symbols = readSymbols();
     for (int i=0; i<symbols.size(); i++) {
-        std::cout << symbols[i] << "\t\t\t" << fzmatch(pattern.c_str(), symbols[i].c_str()) << std::endl;
+        std::cout << symbols[i] << "\t\t\t" << fzmatch(pattern, symbols[i]) << std::endl;
     }
     return;
 }
 
 void vs(std::string pattern, std::string str) {
-    std::cout << fzmatch(pattern.c_str(), str.c_str());
+    std::cout << fzmatch(pattern, str);
     return;
 }
