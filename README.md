@@ -6,12 +6,12 @@
 =======
 Find Unicode Characters: a command line utility for unicode quality-of-life
 
-We live in the golden age of technology; there's a computer in my refrigerator, and self driving cars are here. Why do I have to
+We live in the golden age of technology. There's a computer in my refrigerator. Self driving cars are here. Why do I have to
 
 1. Open my web browser
 2. Run search for a unicode character ('h bar') to get a unicode sequence
 3. Swap back to my document to type in the unicode
 
-every time I want to write `E = ħc`?
+every time I want to write `֎` (left-facing Armenian eternity sign) or `𝋠` (Mayan numeral zero)?
 
 I'm writing `fuc` to solve this issue, and as an experiment in learning about fuzzy string matching. If there's something I can be doing better here, please - open an issue or make a pull request.
