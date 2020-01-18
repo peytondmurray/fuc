@@ -10,7 +10,7 @@
 #include <vector>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include "result.h"
+#include "Result.h"
 #include "levmatch.h"
 
 void parse(std::string fname);

@@ -1,5 +1,5 @@
 /*
-fucq: Find Unicode Characters Quickly
+fuc: Find Unicode Characters
 
 Instead of googling the name of a symbol to find
 the unicode sequence, simply
