@@ -25,7 +25,7 @@ Result::~Result() {
 
 
 bool operator==(Result &a, Result &b) {
-    return std::strcmp(a.str().c_str(), b.str().c_str()) == 0;
+    return a.str().compare(b.str()) == 0;
 }
 
 bool operator<(Result &a, Result &b) {
@@ -71,13 +71,13 @@ ResultSet::~ResultSet() {
 void ResultSet::append_best(std::string string, int value) {
 
 
-    if ((this->results[this->size()-1] < value) || (this->size() < this->maxSize)) {
+    if ((this->results[this->size()-1].val() < value) || (this->size() < this->maxSize)) {
     }
 
     return;
 
     int i = this->size()-1;
-    while (this->results[i] < value) i--;
+    while (this->results[i].val() < value) i--;
     if (i < this->size()) this->results.insert(this->results.begin()+i, Result(string, value));
     return;
 }
